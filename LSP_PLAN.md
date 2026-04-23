@@ -127,3 +127,12 @@ git rebase --onto main <old-lsp-01-tip>     # drops the obsolete lsp/01 commits
 ```
 
 Update this plan's "Status" column each time a branch moves.
+
+## Reviewing code on this stack
+
+Every branch on the stack must be reviewed against **both** sources below, in this order of precedence:
+
+1. **[`REVIEW_GUIDE.md`](REVIEW_GUIDE.md)** — project-specific idioms (error-wrapping style, AST node contract, peggysue patterns, workspace conventions, testing style, layer boundaries). **Project patterns win when they conflict with generic Go advice** — the codebase is intentionally consistent with itself, and a reviewer suggestion to "do it the generic Go way" should be declined unless `REVIEW_GUIDE.md` is actually wrong (in which case update it first).
+2. **`go-core-code-reviewer` agent** — baseline Go team standards (naming, idiom, error handling, concurrency). Surfaces issues the project guide doesn't cover.
+
+Load the guide into the reviewer's context (`@REVIEW_GUIDE.md` or pass the path in the prompt) and run the agent afterward, then address both sets of feedback with project-pattern precedence applied.

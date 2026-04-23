@@ -81,7 +81,7 @@ quake/
 |---|---|---|---|---|---|
 | 0 | `lsp/meta` | `main` | never | 🟠 in progress | This doc lives here; never goes upstream |
 | 1 | `lsp/01-ast-positions` | `main` | `miren/main` | 🟡 complete | Add `Position` to AST nodes; implement `peggysue.SetPositioner` |
-| 2 | `lsp/02-workspace-package` | `lsp/01` | `miren/main` (after 1 lands) | 🔴 not started | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
+| 2 | `lsp/02-workspace-package` | `lsp/01` | `miren/main` (after 1 lands) | 🟡 complete | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
 | 3 | `lsp/03-analysis-package` | `lsp/02` | `miren/main` (after 2 lands) | 🔴 not started | `analysis/` package: symbols, refs, diagnostics |
 | 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🔴 not started | `quake lsp` subcommand, Phase 1 LSP methods |
 

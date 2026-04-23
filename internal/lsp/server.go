@@ -91,6 +91,7 @@ func newServer(version string) *quakeServer {
 		TextDocumentReferences:        s.references,
 		TextDocumentHover:             s.hover,
 		TextDocumentDocumentHighlight: s.documentHighlight,
+		TextDocumentCompletion:        s.completion,
 	}
 	return s
 }
@@ -109,6 +110,12 @@ func (s *quakeServer) initialize(ctx *glsp.Context, params *protocol.InitializeP
 	caps.ReferencesProvider = true
 	caps.HoverProvider = true
 	caps.DocumentHighlightProvider = true
+	caps.CompletionProvider = &protocol.CompletionOptions{
+		// "$" triggers variable completion, "," extends a dep list,
+		// ">" is the back half of "=>" so the first task candidate
+		// appears the moment the user finishes typing the arrow.
+		TriggerCharacters: []string{"$", ",", ">"},
+	}
 
 	return protocol.InitializeResult{
 		Capabilities: caps,
@@ -223,6 +230,14 @@ func (s *quakeServer) documentHighlight(ctx *glsp.Context, params *protocol.Docu
 		return nil, nil
 	}
 	return d.documentHighlight(params.Position), nil
+}
+
+func (s *quakeServer) completion(ctx *glsp.Context, params *protocol.CompletionParams) (any, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	return d.completion(params.Position), nil
 }
 
 // publishDiagnostics sends the current diagnostic set for d to the

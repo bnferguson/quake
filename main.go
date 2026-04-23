@@ -14,15 +14,31 @@ import (
 
 	"miren.dev/mflags"
 	"miren.dev/quake/evaluator"
+	"miren.dev/quake/internal/lsp"
 	"miren.dev/quake/parser"
 	"miren.dev/quake/workspace"
 )
+
+// lspVersion is advertised to LSP clients in the initialize response.
+// The CLI itself does not yet carry a version string; keep this in
+// sync if one is added.
+const lspVersion = "0.0.1"
 
 func main() {
 	os.Exit(realMain())
 }
 
 func realMain() int {
+	// The `lsp` subcommand short-circuits the flag parser because its
+	// stdio contract must not be polluted by mflags' help output.
+	if len(os.Args) > 1 && os.Args[1] == "lsp" {
+		if err := lsp.Serve(lspVersion); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
 	var listTasks bool
 	var verbose bool
 	var generateTask bool

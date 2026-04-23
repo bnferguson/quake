@@ -79,13 +79,13 @@ quake/
 
 | # | Branch | Base | PR target | Status | Notes |
 |---|---|---|---|---|---|
-| 0 | `lsp/meta` | `main` | never | 🟢 active | This doc lives here |
-| 1 | `lsp/01-ast-positions` | `main` | `miren/main` | 🔴 not started | Add `Position` to AST nodes; implement `peggysue.SetPositioner` |
+| 0 | `lsp/meta` | `main` | never | 🟡 local | This doc lives here; never goes upstream |
+| 1 | `lsp/01-ast-positions` | `main` | `miren/main` | 🟡 local | Add `Position` to AST nodes; implement `peggysue.SetPositioner` |
 | 2 | `lsp/02-workspace-package` | `lsp/01` | `miren/main` (after 1 lands) | 🔴 not started | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
 | 3 | `lsp/03-analysis-package` | `lsp/02` | `miren/main` (after 2 lands) | 🔴 not started | `analysis/` package: symbols, refs, diagnostics |
 | 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🔴 not started | `quake lsp` subcommand, Phase 1 LSP methods |
 
-Status legend: 🟢 active · 🟡 in review · 🟢✓ merged · 🔴 not started · ⚪ blocked
+Status legend: 🔴 not started · 🟡 local (working or complete, no PR yet) · 🟢 PR open · ✅ merged upstream · ⚪ blocked
 
 Upstream PR flow: push branch, open PR with base `miren/quake:main` (or the prior stacked branch if reviewed together). Plan file is never included.
 

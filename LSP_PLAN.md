@@ -48,13 +48,18 @@ quake/
 | `textDocument/documentSymbol` | Outline: tasks, namespaces, variables |
 | `textDocument/definition` | Jump from `=> build` → `task build`, `$VAR` → assignment |
 
-### Phase 2 — navigation depth
+### Phase 2 — navigation depth (ships in `lsp/05-navigation`)
 
 | Method | Use |
 |---|---|
 | `textDocument/references` | Who depends on task X |
 | `textDocument/hover` | Task description + args + deps; variable value |
 | `textDocument/documentHighlight` | Same-symbol highlighting in current file |
+
+Precise reference ranges are computed by scanning the document text
+within each task's byte range, since `analysis.ReferenceIndex`
+records refs at the containing task's position. Keeps `analysis/`
+source-text-free; the LSP layer pays the precision cost.
 
 ### Phase 3 — authoring help
 
@@ -84,6 +89,7 @@ quake/
 | 2 | `lsp/02-workspace-package` | `lsp/01` | `miren/main` (after 1 lands) | 🟡 complete | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
 | 3 | `lsp/03-analysis-package` | `lsp/02` | `miren/main` (after 2 lands) | 🟡 complete | `analysis/` package: symbols, refs, diagnostics |
 | 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🟡 complete | `quake lsp` subcommand, Phase 1 LSP methods |
+| 5 | `lsp/05-navigation` | `lsp/04` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 2: `textDocument/references`, `hover`, `documentHighlight` |
 
 Status legend: 🔴 not started · 🟠 in progress · 🟡 complete locally (no PR yet) · 🟢 PR open · ✅ merged upstream · ⚪ blocked
 

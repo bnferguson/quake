@@ -90,6 +90,7 @@ source-text-free; the LSP layer pays the precision cost.
 | 3 | `lsp/03-analysis-package` | `lsp/02` | `miren/main` (after 2 lands) | 🟡 complete | `analysis/` package: symbols, refs, diagnostics |
 | 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🟡 complete | `quake lsp` subcommand, Phase 1 LSP methods |
 | 5 | `lsp/05-navigation` | `lsp/04` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 2: `textDocument/references`, `hover`, `documentHighlight` |
+| 6 | `lsp/06-completion` | `lsp/05` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 1: `textDocument/completion` for deps, variables, and expression identifiers |
 
 Status legend: 🔴 not started · 🟠 in progress · 🟡 complete locally (no PR yet) · 🟢 PR open · ✅ merged upstream · ⚪ blocked
 

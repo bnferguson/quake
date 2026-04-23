@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"fmt"
+	"strings"
 
 	protocol "github.com/tliron/glsp/protocol_3_16"
 
@@ -146,6 +147,211 @@ func (d *document) definition(pos protocol.Position) *protocol.Location {
 		return d.locationOf(ns.Position)
 	}
 	return nil
+}
+
+// references returns every in-document occurrence of the symbol at
+// pos. When includeDecl is true the declaration itself is listed
+// first. Returns nil when the cursor is not on a known symbol name.
+func (d *document) references(pos protocol.Position, includeDecl bool) []protocol.Location {
+	uses := d.findUses(pos)
+	if uses == nil {
+		return nil
+	}
+	out := make([]protocol.Location, 0, len(uses.refs)+1)
+	if includeDecl && uses.decl != nil {
+		out = append(out, protocol.Location{URI: d.uri, Range: d.rangeOfSpan(*uses.decl)})
+	}
+	for _, s := range uses.refs {
+		out = append(out, protocol.Location{URI: d.uri, Range: d.rangeOfSpan(s)})
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// hover renders a Markdown summary of the symbol at pos: a task's
+// description, argument list, and dependencies, or a variable's
+// value. Returns nil when the cursor is not on a known symbol.
+func (d *document) hover(pos protocol.Position) *protocol.Hover {
+	if d.symbols == nil {
+		return nil
+	}
+	offset := int(pos.IndexIn(d.text))
+	name := qualifiedNameAt(d.text, offset)
+	if name == "" {
+		return nil
+	}
+
+	if task := d.symbols.Task(name); task != nil {
+		return &protocol.Hover{Contents: markdown(taskHoverMarkdown(name, task))}
+	}
+	if v := d.symbols.Variable(name); v != nil {
+		return &protocol.Hover{Contents: markdown(variableHoverMarkdown(name, v))}
+	}
+	return nil
+}
+
+// documentHighlight returns every in-document occurrence of the
+// symbol at pos. The declaration (if in this file) is marked with
+// DocumentHighlightKindWrite; every use is marked Read. Returns nil
+// when the cursor is not on a known symbol name.
+func (d *document) documentHighlight(pos protocol.Position) []protocol.DocumentHighlight {
+	uses := d.findUses(pos)
+	if uses == nil {
+		return nil
+	}
+	out := make([]protocol.DocumentHighlight, 0, len(uses.refs)+1)
+	if uses.decl != nil {
+		out = append(out, protocol.DocumentHighlight{
+			Range: d.rangeOfSpan(*uses.decl),
+			Kind:  highlightKindPtr(protocol.DocumentHighlightKindWrite),
+		})
+	}
+	for _, s := range uses.refs {
+		out = append(out, protocol.DocumentHighlight{
+			Range: d.rangeOfSpan(s),
+			Kind:  highlightKindPtr(protocol.DocumentHighlightKindRead),
+		})
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// symbolUses captures every in-document site of a single symbol —
+// its declaration (if present in this file) and every use. Both
+// references() and documentHighlight() are thin projections over it.
+type symbolUses struct {
+	decl *span
+	refs []span
+}
+
+// findUses resolves the symbol under pos and collects its
+// in-document sites. An unknown identifier at the cursor still
+// yields a result if it appears as a dep or variable reference —
+// that's the "find references to undeclared X" case, useful for
+// spotting typos.
+func (d *document) findUses(pos protocol.Position) *symbolUses {
+	if d.quakeFile == nil || d.symbols == nil {
+		return nil
+	}
+	offset := int(pos.IndexIn(d.text))
+	name := qualifiedNameAt(d.text, offset)
+	if name == "" {
+		return nil
+	}
+
+	uses := &symbolUses{}
+	if task := d.symbols.Task(name); task != nil {
+		if s, ok := taskNameSpan(d.text, task); ok {
+			uses.decl = &s
+		}
+	} else if v := d.symbols.Variable(name); v != nil {
+		if s, ok := variableNameSpan(d.text, v); ok {
+			uses.decl = &s
+		}
+	}
+
+	// Tasks and variables inhabit different namespaces in the source
+	// (task deps after "=>", variables after "$"), so scanning both
+	// kinds is both safe and cheap. Lets an undeclared name still
+	// surface as a reference list.
+	d.walkTasks(func(t *parser.Task) {
+		uses.refs = append(uses.refs, scanDependencyRefs(d.text, t.Position, name)...)
+		uses.refs = append(uses.refs, scanVariableRefs(d.text, t.Position.Start, t.Position.End, name)...)
+	})
+
+	if uses.decl == nil && len(uses.refs) == 0 {
+		return nil
+	}
+	return uses
+}
+
+// walkTasks invokes f for every task in the document, including
+// those nested inside namespaces at any depth.
+func (d *document) walkTasks(f func(*parser.Task)) {
+	if d.quakeFile == nil {
+		return
+	}
+	for i := range d.quakeFile.Tasks {
+		f(&d.quakeFile.Tasks[i])
+	}
+	for i := range d.quakeFile.Namespaces {
+		walkNamespaceTasks(&d.quakeFile.Namespaces[i], f)
+	}
+}
+
+func walkNamespaceTasks(n *parser.Namespace, f func(*parser.Task)) {
+	for i := range n.Tasks {
+		f(&n.Tasks[i])
+	}
+	for i := range n.Namespaces {
+		walkNamespaceTasks(&n.Namespaces[i], f)
+	}
+}
+
+// rangeOfSpan converts an internal byte span to an LSP Range using
+// the document's cached line index.
+func (d *document) rangeOfSpan(s span) protocol.Range {
+	return protocol.Range{
+		Start: d.lines.position(s.start),
+		End:   d.lines.position(s.end),
+	}
+}
+
+func highlightKindPtr(k protocol.DocumentHighlightKind) *protocol.DocumentHighlightKind {
+	return &k
+}
+
+func markdown(value string) protocol.MarkupContent {
+	return protocol.MarkupContent{Kind: protocol.MarkupKindMarkdown, Value: value}
+}
+
+// taskHoverMarkdown renders a Markdown card for task t. Args are
+// rendered as a parenthesized signature; dependencies are listed as
+// a comma-separated tail so `build(target) => test, lint` reads
+// naturally.
+func taskHoverMarkdown(name string, t *parser.Task) string {
+	var b strings.Builder
+	b.WriteString("```quake\ntask ")
+	b.WriteString(name)
+	if len(t.Arguments) > 0 {
+		b.WriteByte('(')
+		b.WriteString(strings.Join(t.Arguments, ", "))
+		b.WriteByte(')')
+	}
+	if len(t.Dependencies) > 0 {
+		b.WriteString(" => ")
+		b.WriteString(strings.Join(t.Dependencies, ", "))
+	}
+	b.WriteString("\n```")
+	if t.Description != "" {
+		b.WriteString("\n\n")
+		b.WriteString(t.Description)
+	}
+	return b.String()
+}
+
+// variableHoverMarkdown renders a Markdown card for variable v. A
+// plain string value is shown verbatim; expressions and backticks
+// fall back to a generic label rather than trying to render the
+// underlying AST.
+func variableHoverMarkdown(name string, v *parser.Variable) string {
+	var b strings.Builder
+	b.WriteString("```quake\n")
+	b.WriteString(name)
+	b.WriteString(" = ")
+	if s, ok := v.Value.(string); ok {
+		b.WriteByte('"')
+		b.WriteString(s)
+		b.WriteByte('"')
+	} else {
+		b.WriteString("<expression>")
+	}
+	b.WriteString("\n```")
+	return b.String()
 }
 
 func (d *document) taskSymbol(t *parser.Task) protocol.DocumentSymbol {

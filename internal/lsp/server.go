@@ -78,16 +78,19 @@ func newServer(version string) *quakeServer {
 		docs:    newDocumentStore(),
 	}
 	s.handler = protocol.Handler{
-		Initialize:             s.initialize,
-		Initialized:            s.initialized,
-		Shutdown:               s.shutdown,
-		SetTrace:               s.setTrace,
-		TextDocumentDidOpen:    s.didOpen,
-		TextDocumentDidChange:  s.didChange,
-		TextDocumentDidSave:    s.didSave,
-		TextDocumentDidClose:   s.didClose,
-		TextDocumentDocumentSymbol: s.documentSymbol,
-		TextDocumentDefinition:     s.definition,
+		Initialize:                    s.initialize,
+		Initialized:                   s.initialized,
+		Shutdown:                      s.shutdown,
+		SetTrace:                      s.setTrace,
+		TextDocumentDidOpen:           s.didOpen,
+		TextDocumentDidChange:         s.didChange,
+		TextDocumentDidSave:           s.didSave,
+		TextDocumentDidClose:          s.didClose,
+		TextDocumentDocumentSymbol:    s.documentSymbol,
+		TextDocumentDefinition:        s.definition,
+		TextDocumentReferences:        s.references,
+		TextDocumentHover:             s.hover,
+		TextDocumentDocumentHighlight: s.documentHighlight,
 	}
 	return s
 }
@@ -103,6 +106,9 @@ func (s *quakeServer) initialize(ctx *glsp.Context, params *protocol.InitializeP
 	}
 	caps.DocumentSymbolProvider = true
 	caps.DefinitionProvider = true
+	caps.ReferencesProvider = true
+	caps.HoverProvider = true
+	caps.DocumentHighlightProvider = true
 
 	return protocol.InitializeResult{
 		Capabilities: caps,
@@ -193,6 +199,30 @@ func (s *quakeServer) definition(ctx *glsp.Context, params *protocol.DefinitionP
 		return nil, nil
 	}
 	return *loc, nil
+}
+
+func (s *quakeServer) references(ctx *glsp.Context, params *protocol.ReferenceParams) ([]protocol.Location, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	return d.references(params.Position, params.Context.IncludeDeclaration), nil
+}
+
+func (s *quakeServer) hover(ctx *glsp.Context, params *protocol.HoverParams) (*protocol.Hover, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	return d.hover(params.Position), nil
+}
+
+func (s *quakeServer) documentHighlight(ctx *glsp.Context, params *protocol.DocumentHighlightParams) ([]protocol.DocumentHighlight, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	return d.documentHighlight(params.Position), nil
 }
 
 // publishDiagnostics sends the current diagnostic set for d to the

@@ -57,7 +57,7 @@ func TestParseExpressions(t *testing.T) {
 
 			// Actions return pointer Expressions so peggysue can set Position.
 			// Unwrap to the value form and strip positions for the comparison.
-			got := stripExprPositions(exprValue(result.(Expression)))
+			got := zeroExprPosition(exprValue(result.(Expression)))
 			require.Equal(t, tt.expected, got)
 		})
 	}

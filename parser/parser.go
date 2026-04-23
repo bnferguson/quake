@@ -880,6 +880,10 @@ func exprValue(e Expression) Expression {
 // zeroCmdElemPosition returns e with its Position (and the Position of any
 // nested Expression) cleared. Used by parseCommands, whose element positions
 // are offsets into a re-parsed command buffer rather than the source file.
+//
+// This, exprValue, cmdElemValue, and zeroExprPosition are all exhaustive
+// switches over the closed set of CommandElement / Expression types. Adding
+// a new type requires a case in each.
 func zeroCmdElemPosition(e CommandElement) CommandElement {
 	switch v := e.(type) {
 	case StringElement:
@@ -896,7 +900,7 @@ func zeroCmdElemPosition(e CommandElement) CommandElement {
 		v.Expression = zeroExprPosition(v.Expression)
 		return v
 	}
-	return e
+	panic(fmt.Sprintf("parser: unhandled CommandElement type %T in zeroCmdElemPosition", e))
 }
 
 // zeroExprPosition returns e with its Position (and any nested Expression
@@ -919,7 +923,7 @@ func zeroExprPosition(e Expression) Expression {
 		v.Right = zeroExprPosition(v.Right)
 		return v
 	}
-	return e
+	panic(fmt.Sprintf("parser: unhandled Expression type %T in zeroExprPosition", e))
 }
 
 // cmdElemValue converts a pointer-typed CommandElement to its value form.
@@ -1003,10 +1007,16 @@ func setNamespaceTaskSourceFile(namespaces []Namespace, sourceFile string) {
 // wrapper preserves the child's Position even when the outer rule's span
 // includes leading whitespace or a preceding doc comment.
 type positionGuard struct {
+	// inner is always an AST node pointer (*Task, *Namespace, *Variable,
+	// *FileNamespaceDirective) or another positionGuard — never a value
+	// type and never nil.
 	inner any
 }
 
-// unwrapGuard peels nested positionGuard wrappers off v.
+// unwrapGuard peels nested positionGuard wrappers off v. Nesting happens
+// for documented tasks: the taskWithDoc Action wraps *Task in a guard, then
+// topLevelElement wraps that again — so two layers deep before the QuakeFile
+// aggregator sees it.
 func unwrapGuard(v any) any {
 	for {
 		w, ok := v.(positionGuard)

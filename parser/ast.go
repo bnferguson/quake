@@ -17,10 +17,9 @@ import (
 // Top-level nodes (Task, Namespace, Variable, FileNamespaceDirective,
 // QuakeFile) carry accurate absolute source offsets. Command-line
 // elements (StringElement, VariableElement, ExpressionElement,
-// BacktickElement) have their Position zeroed today because
-// parseCommands re-parses each command line in isolation; a later
-// branch that inlines command parsing into the main grammar can
-// populate them properly.
+// BacktickElement) have their Position zeroed; see parseCommands.
+// A later branch that inlines command parsing into the main grammar
+// can populate them properly.
 type Position struct {
 	Start    int    `json:"-"`
 	End      int    `json:"-"`

@@ -11,7 +11,7 @@ func TestParseSingleDependency(t *testing.T) {
     echo "Building..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -39,7 +39,7 @@ func TestParseMultipleDependencies(t *testing.T) {
     echo "Running tests..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -67,7 +67,7 @@ func TestParseTaskWithArgumentsAndDependencies(t *testing.T) {
     echo "Deploying to environment: $env"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -98,7 +98,7 @@ func TestParseNamespacedTaskNames(t *testing.T) {
     echo "Generating documentation..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -125,7 +125,7 @@ func TestParseFileDependencies(t *testing.T) {
     echo "Processing input.txt to create output.txt"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -161,7 +161,7 @@ task deploy => compile, assets:upload, db:migrate {
     echo "Deploying..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -206,7 +206,7 @@ func TestParseDependenciesWithSpacing(t *testing.T) {
     echo "Deploying with varied spacing..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -236,7 +236,7 @@ task build {
     echo "Building..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

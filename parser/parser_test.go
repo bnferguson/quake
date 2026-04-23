@@ -21,7 +21,7 @@ func TestParseSimpleTask(t *testing.T) {
     echo "Hello, World!"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -45,7 +45,7 @@ func TestParseTaskWithArguments(t *testing.T) {
     echo "Hello, $name!"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -74,7 +74,7 @@ func TestParseTaskWithSpecialCommands(t *testing.T) {
     echo "normal command"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -110,7 +110,7 @@ func TestParseTaskWithSpecialCommands(t *testing.T) {
 func TestParseEmptyFile(t *testing.T) {
 	input := ""
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -124,7 +124,7 @@ func TestJSONSerialization(t *testing.T) {
     echo "world"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -146,7 +146,7 @@ func TestParseSimpleNamespace(t *testing.T) {
     }
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -179,7 +179,7 @@ task start {
     echo "Starting API server"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -204,7 +204,7 @@ func TestParseTaskWithDependencies(t *testing.T) {
     echo "Deploying..."
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -231,7 +231,7 @@ func TestParseTaskWithQuotedBraces(t *testing.T) {
     echo "Multiple } braces } in one line"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -264,7 +264,7 @@ func TestParseTaskWithNestedBraces(t *testing.T) {
     echo "Done"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -298,7 +298,7 @@ func TestParseTaskWithJSONInCommand(t *testing.T) {
     echo "JSON sent"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

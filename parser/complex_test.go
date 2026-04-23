@@ -21,7 +21,7 @@ func TestParseComplexQuakefile(t *testing.T) {
 	require.NoError(t, err, "should read expected AST")
 
 	// Parse the Quakefile
-	result, ok, err := ParseQuakefile(string(inputData))
+	result, ok, err := parseNoPos(string(inputData))
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

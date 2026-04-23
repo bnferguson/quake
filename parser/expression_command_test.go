@@ -79,7 +79,7 @@ func TestParseExpressionsInCommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, ok, err := ParseQuakefile(tt.input)
+			result, ok, err := parseNoPos(tt.input)
 			require.True(t, ok, "parsing should succeed")
 			require.NoError(t, err, "should not return error")
 
@@ -93,7 +93,7 @@ func TestParseExpressionsWithSpacing(t *testing.T) {
 	// Test that expressions handle spacing inside {{}}
 	input := `task test { echo {{ env.API_KEY || "default" }} }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

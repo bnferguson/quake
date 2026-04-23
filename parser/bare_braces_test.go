@@ -9,7 +9,7 @@ func TestParseBareEmptyBraces(t *testing.T) {
   {}
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -41,7 +41,7 @@ func TestParseBareEmptyBracesWithSpaces(t *testing.T) {
   { }
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -65,7 +65,7 @@ func TestParseBracesInPipeline(t *testing.T) {
   echo "test" | {}
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -89,7 +89,7 @@ func TestParseBracesInShellGrouping(t *testing.T) {
   { echo "first"; echo "second"; }
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -113,7 +113,7 @@ func TestParseNestedBracesInConditional(t *testing.T) {
   if [ -f test ]; then { echo "found"; } fi
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -137,7 +137,7 @@ func TestParseAwkWithBraces(t *testing.T) {
   awk '{ print $1 }' file.txt
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -164,7 +164,7 @@ func TestParseMultipleBracePatterns(t *testing.T) {
   awk '{ print }' 
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}
@@ -190,7 +190,7 @@ func TestParseBracesInQuotes(t *testing.T) {
   echo '{ test }'
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	if !ok || err != nil {
 		t.Fatalf("Failed to parse: ok=%v, err=%v", ok, err)
 	}

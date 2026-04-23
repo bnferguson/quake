@@ -14,7 +14,7 @@ func TestParseBacktickCommands(t *testing.T) {
     ` + "`" + `date +%Y-%m-%d` + "`" + `
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -49,7 +49,7 @@ func TestParseBacktickWithPrefixes(t *testing.T) {
     ` + "`" + `pwd` + "`" + `
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -91,7 +91,7 @@ func TestParseMixedCommandsAndBackticks(t *testing.T) {
     echo "Done"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

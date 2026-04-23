@@ -15,7 +15,7 @@ task info {
     echo "App: $APP_NAME v$VERSION"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -54,7 +54,7 @@ task version {
     echo "Date: $BUILD_DATE"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -95,7 +95,7 @@ task deploy {
     echo "Key: $API_KEY"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -146,7 +146,7 @@ task help {
     echo "$HELP_TEXT"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -182,7 +182,7 @@ func TestParseTaskLocalVariables(t *testing.T) {
     echo "Building $TARGET"
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -224,7 +224,7 @@ func TestParseNamespaceVariables(t *testing.T) {
     }
 }`
 
-	result, ok, err := ParseQuakefile(input)
+	result, ok, err := parseNoPos(input)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

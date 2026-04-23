@@ -20,7 +20,7 @@ func TestParseBasicQuakefile(t *testing.T) {
     echo "This is the default action"
 }`
 
-	result, ok, err := ParseQuakefile(firstTaskContent)
+	result, ok, err := parseNoPos(firstTaskContent)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -49,7 +49,7 @@ func TestParseHelloTask(t *testing.T) {
     echo "Hello, World!"
 }`
 
-	result, ok, err := ParseQuakefile(helloTaskContent)
+	result, ok, err := parseNoPos(helloTaskContent)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 
@@ -78,7 +78,7 @@ func TestParseGreetPersonTask(t *testing.T) {
     echo "Nice to meet you"
 }`
 
-	result, ok, err := ParseQuakefile(greetTaskContent)
+	result, ok, err := parseNoPos(greetTaskContent)
 	require.True(t, ok, "parsing should succeed")
 	require.NoError(t, err, "should not return error")
 

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 
 	p "github.com/lab47/peggysue"
@@ -167,7 +168,7 @@ func (g *Grammar) init() {
 			p.Or(p.S("\n"), p.EOS()),
 		),
 		func(v p.Values) any {
-			return FileNamespaceDirective{Name: v.Get("name").(string)}
+			return &FileNamespaceDirective{Name: v.Get("name").(string)}
 		},
 	)
 
@@ -184,7 +185,7 @@ func (g *Grammar) init() {
 			)),
 		),
 		func(s string) any {
-			return Identifier{Name: s}
+			return &Identifier{Name: s}
 		},
 	)
 
@@ -209,7 +210,7 @@ func (g *Grammar) init() {
 				// Unescape the content
 				content = strings.ReplaceAll(content, "\\\"", "\"")
 				content = strings.ReplaceAll(content, "\\\\", "\\")
-				return StringLiteral{Value: content}
+				return &StringLiteral{Value: content}
 			},
 		),
 		// Single quoted string
@@ -231,7 +232,7 @@ func (g *Grammar) init() {
 				// Unescape the content
 				content = strings.ReplaceAll(content, "\\'", "'")
 				content = strings.ReplaceAll(content, "\\\\", "\\")
-				return StringLiteral{Value: content}
+				return &StringLiteral{Value: content}
 			},
 		),
 	)
@@ -249,22 +250,22 @@ func (g *Grammar) init() {
 					p.Named("prop", g.identifier),
 				),
 				func(v p.Values) any {
-					return v.Get("prop").(Identifier).Name
+					return v.Get("prop").(*Identifier).Name
 				},
 			), 0, -1, func(values []any) any {
 				return values
 			})),
 		),
 		func(v p.Values) any {
-			base := v.Get("base").(Expression)
+			base := exprValue(v.Get("base").(Expression))
 			accesses := v.Get("accesses")
 
-			result := base
+			var result Expression = base
 			if accesses != nil {
 				if accessList, ok := accesses.([]any); ok {
 					for _, access := range accessList {
 						if prop, ok := access.(string); ok {
-							result = AccessId{Object: result, Property: prop}
+							result = &AccessId{Object: result, Property: prop}
 						}
 					}
 				}
@@ -285,22 +286,22 @@ func (g *Grammar) init() {
 					p.Named("right", g.accessExpr),
 				),
 				func(v p.Values) any {
-					return v.Get("right")
+					return exprValue(v.Get("right").(Expression))
 				},
 			), 0, -1, func(values []any) any {
 				return values
 			})),
 		),
 		func(v p.Values) any {
-			left := v.Get("left").(Expression)
+			left := exprValue(v.Get("left").(Expression))
 			rights := v.Get("rights")
 
-			result := left
+			var result Expression = left
 			if rights != nil {
 				if rightList, ok := rights.([]any); ok {
 					for _, right := range rightList {
 						if rightExpr, ok := right.(Expression); ok {
-							result = Or{Left: result, Right: rightExpr}
+							result = &Or{Left: result, Right: rightExpr}
 						}
 					}
 				}
@@ -336,7 +337,7 @@ func (g *Grammar) init() {
 			p.S("`"),
 		),
 		func(v p.Values) any {
-			return Variable{
+			return &Variable{
 				Value:               "`" + v.Get("cmd").(string) + "`",
 				CommandSubstitution: true,
 			}
@@ -350,8 +351,8 @@ func (g *Grammar) init() {
 			p.S("}}"),
 		),
 		func(v p.Values) any {
-			return Variable{
-				Value:        v.Get("expr").(Expression),
+			return &Variable{
+				Value:        exprValue(v.Get("expr").(Expression)),
 				IsExpression: true,
 			}
 		},
@@ -383,7 +384,7 @@ func (g *Grammar) init() {
 			p.Or(p.S("\n"), p.EOS()),
 		),
 		func(v p.Values) any {
-			return Variable{
+			return &Variable{
 				Name:        v.Get("name").(string),
 				Value:       v.Get("content").(string),
 				IsMultiline: true,
@@ -404,11 +405,11 @@ func (g *Grammar) init() {
 		func(v p.Values) any {
 			value := v.Get("value")
 			switch val := value.(type) {
-			case Variable:
+			case *Variable:
 				val.Name = v.Get("name").(string)
 				return val
 			default:
-				return Variable{
+				return &Variable{
 					Name:  v.Get("name").(string),
 					Value: val.(string),
 				}
@@ -460,7 +461,7 @@ func (g *Grammar) init() {
 			content := v.Get("content").(string)
 			commands := parseCommands(content)
 
-			return Task{
+			return &Task{
 				Name:     name,
 				Commands: commands,
 			}
@@ -488,7 +489,7 @@ func (g *Grammar) init() {
 			content := v.Get("content").(string)
 			commands := parseCommands(content)
 
-			return Task{
+			return &Task{
 				Name:      name,
 				Arguments: args,
 				Commands:  commands,
@@ -518,7 +519,7 @@ func (g *Grammar) init() {
 			content := v.Get("content").(string)
 			commands := parseCommands(content)
 
-			return Task{
+			return &Task{
 				Name:         name,
 				Dependencies: deps,
 				Commands:     commands,
@@ -552,7 +553,7 @@ func (g *Grammar) init() {
 			content := v.Get("content").(string)
 			commands := parseCommands(content)
 
-			return Task{
+			return &Task{
 				Name:         name,
 				Arguments:    args,
 				Dependencies: deps,
@@ -578,7 +579,7 @@ func (g *Grammar) init() {
 			name := v.Get("name").(string)
 			deps := v.Get("deps").([]string)
 
-			return Task{
+			return &Task{
 				Name:         name,
 				Dependencies: deps,
 				Commands:     []Command{}, // Empty commands for deps-only tasks
@@ -594,7 +595,10 @@ func (g *Grammar) init() {
 		g.taskSimple,
 	)
 
-	// Define namespace rule
+	// Define namespace rule. Each element is wrapped in positionGuard so the
+	// outer Action here (and the Seq(ws, element) action below) doesn't
+	// re-stamp the child's Position with a span that includes leading
+	// whitespace.
 	namespaceRule := p.Action(
 		p.Seq(
 			p.S("namespace"),
@@ -613,7 +617,7 @@ func (g *Grammar) init() {
 					)),
 				),
 				func(v p.Values) any {
-					return v.Get("element")
+					return positionGuard{inner: v.Get("element")}
 				},
 			), 0, -1, func(values []any) any {
 				return values
@@ -624,7 +628,7 @@ func (g *Grammar) init() {
 		),
 		func(v p.Values) any {
 			name := v.Get("name").(string)
-			ns := Namespace{
+			ns := &Namespace{
 				Name:       name,
 				Tasks:      []Task{},
 				Variables:  []Variable{},
@@ -634,16 +638,17 @@ func (g *Grammar) init() {
 			elements := v.Get("elements")
 			if elements != nil {
 				for _, elem := range elements.([]any) {
+					elem = unwrapGuard(elem)
 					if elem == nil {
 						continue
 					}
 					switch e := elem.(type) {
-					case Task:
-						ns.Tasks = append(ns.Tasks, e)
-					case Variable:
-						ns.Variables = append(ns.Variables, e)
-					case Namespace:
-						ns.Namespaces = append(ns.Namespaces, e)
+					case *Task:
+						ns.Tasks = append(ns.Tasks, *e)
+					case *Variable:
+						ns.Variables = append(ns.Variables, *e)
+					case *Namespace:
+						ns.Namespaces = append(ns.Namespaces, *e)
 					}
 				}
 			}
@@ -657,7 +662,9 @@ func (g *Grammar) init() {
 	}
 	g.namespace = namespaceRule
 
-	// Task with optional documentation comment
+	// Task with optional documentation comment. Wraps the *Task in positionGuard
+	// so the outer Action's SetPositioner pass doesn't overwrite the task's
+	// Position with a span that includes the preceding doc comment.
 	g.taskWithDoc = p.Or(
 		// Task with preceding comment
 		p.Action(
@@ -668,18 +675,20 @@ func (g *Grammar) init() {
 				p.Named("task", g.task),
 			),
 			func(v p.Values) any {
-				task := v.Get("task").(Task)
+				task := v.Get("task").(*Task)
 				if doc, ok := v.Get("doc").(string); ok && doc != "" {
 					task.Description = doc
 				}
-				return task
+				return positionGuard{inner: task}
 			},
 		),
 		// Task without comment
 		g.task,
 	)
 
-	// Define top-level element
+	// Define top-level element. Wraps the inner value in positionGuard so the
+	// surrounding Action's SetPositioner dispatch doesn't overwrite the
+	// child's Position with a span that includes leading whitespace.
 	g.topLevelElement = p.Action(
 		p.Seq(
 			g.ws,
@@ -692,7 +701,7 @@ func (g *Grammar) init() {
 			)),
 		),
 		func(v p.Values) any {
-			return v.Get("element")
+			return positionGuard{inner: v.Get("element")}
 		},
 	)
 
@@ -706,44 +715,30 @@ func (g *Grammar) init() {
 			p.EOS(),
 		),
 		func(v p.Values) any {
-			qf := QuakeFile{
+			qf := &QuakeFile{
 				Tasks:      []Task{},
 				Namespaces: []Namespace{},
 				Variables:  []Variable{},
 			}
 
 			elements := v.Get("elements")
-			// Debug: check what type elements is
 			if elements != nil {
-				// Try to handle it as a slice
-				switch elems := elements.(type) {
-				case []any:
+				if elems, ok := elements.([]any); ok {
 					for _, elem := range elems {
+						elem = unwrapGuard(elem)
 						if elem == nil {
 							continue
 						}
 						switch e := elem.(type) {
-						case Task:
-							qf.Tasks = append(qf.Tasks, e)
-						case Namespace:
-							qf.Namespaces = append(qf.Namespaces, e)
-						case Variable:
-							qf.Variables = append(qf.Variables, e)
-						case FileNamespaceDirective:
+						case *Task:
+							qf.Tasks = append(qf.Tasks, *e)
+						case *Namespace:
+							qf.Namespaces = append(qf.Namespaces, *e)
+						case *Variable:
+							qf.Variables = append(qf.Variables, *e)
+						case *FileNamespaceDirective:
 							qf.FileNamespace = e.Name
 						}
-					}
-				default:
-					// Single element?
-					switch e := elements.(type) {
-					case Task:
-						qf.Tasks = append(qf.Tasks, e)
-					case Namespace:
-						qf.Namespaces = append(qf.Namespaces, e)
-					case Variable:
-						qf.Variables = append(qf.Variables, e)
-					case FileNamespaceDirective:
-						qf.FileNamespace = e.Name
 					}
 				}
 			}
@@ -768,7 +763,7 @@ func (g *Grammar) init() {
 			)),
 		),
 		func(v p.Values) any {
-			return VariableElement{Name: v.Get("name").(string)}
+			return &VariableElement{Name: v.Get("name").(string)}
 		},
 	)
 
@@ -782,7 +777,7 @@ func (g *Grammar) init() {
 			p.S("}}"),
 		),
 		func(v p.Values) any {
-			return ExpressionElement{Expression: v.Get("expr").(Expression)}
+			return &ExpressionElement{Expression: exprValue(v.Get("expr").(Expression))}
 		},
 	)
 
@@ -800,7 +795,7 @@ func (g *Grammar) init() {
 			p.S("`"),
 		),
 		func(v p.Values) any {
-			return BacktickElement{Command: v.Get("cmd").(string)}
+			return &BacktickElement{Command: v.Get("cmd").(string)}
 		},
 	)
 
@@ -817,7 +812,7 @@ func (g *Grammar) init() {
 			p.Any(),
 		)),
 		func(s string) any {
-			return StringElement{Value: s}
+			return &StringElement{Value: s}
 		},
 	)
 
@@ -829,11 +824,14 @@ func (g *Grammar) init() {
 		g.plainText,
 	)
 
-	// Command elements (multiple elements)
+	// Command elements (multiple elements). Dereference pointer command
+	// elements so the resulting []CommandElement holds value types — keeping
+	// the public AST shape stable while letting peggysue mutate positions on
+	// the pointer during parsing.
 	g.commandElements = p.Many(g.commandElement, 0, -1, func(values []any) any {
 		elements := make([]CommandElement, 0, len(values))
 		for _, v := range values {
-			if elem, ok := v.(CommandElement); ok {
+			if elem := cmdElemValue(v); elem != nil {
 				elements = append(elements, elem)
 			}
 		}
@@ -848,10 +846,102 @@ func (g *Grammar) init() {
 		),
 		func(v p.Values) any {
 			elements := v.Get("elements").([]CommandElement)
-			return Command{Elements: elements}
+			return &Command{Elements: elements}
 		},
 	)
 
+}
+
+// exprValue converts a pointer-typed Expression into its value equivalent.
+// Parser actions return pointers so peggysue's SetPositioner can mutate the
+// Position field; the public AST exposes value-typed Expressions in struct
+// fields, so we dereference at the boundary.
+//
+// Every Expression implementation with a pointer receiver must be listed
+// here. Adding a new Expression type without updating this switch would
+// silently leave a pointer inside an interface field, breaking
+// reflect.DeepEqual in tests.
+func exprValue(e Expression) Expression {
+	switch v := e.(type) {
+	case *Identifier:
+		return *v
+	case *StringLiteral:
+		return *v
+	case *AccessId:
+		return *v
+	case *Or:
+		return *v
+	case Identifier, StringLiteral, AccessId, Or:
+		return e
+	}
+	panic(fmt.Sprintf("parser: unhandled Expression type %T in exprValue", e))
+}
+
+// zeroCmdElemPosition returns e with its Position (and the Position of any
+// nested Expression) cleared. Used by parseCommands, whose element positions
+// are offsets into a re-parsed command buffer rather than the source file.
+func zeroCmdElemPosition(e CommandElement) CommandElement {
+	switch v := e.(type) {
+	case StringElement:
+		v.Position = Position{}
+		return v
+	case BacktickElement:
+		v.Position = Position{}
+		return v
+	case VariableElement:
+		v.Position = Position{}
+		return v
+	case ExpressionElement:
+		v.Position = Position{}
+		v.Expression = zeroExprPosition(v.Expression)
+		return v
+	}
+	return e
+}
+
+// zeroExprPosition returns e with its Position (and any nested Expression
+// positions) cleared. See zeroCmdElemPosition.
+func zeroExprPosition(e Expression) Expression {
+	switch v := e.(type) {
+	case Identifier:
+		v.Position = Position{}
+		return v
+	case StringLiteral:
+		v.Position = Position{}
+		return v
+	case AccessId:
+		v.Position = Position{}
+		v.Object = zeroExprPosition(v.Object)
+		return v
+	case Or:
+		v.Position = Position{}
+		v.Left = zeroExprPosition(v.Left)
+		v.Right = zeroExprPosition(v.Right)
+		return v
+	}
+	return e
+}
+
+// cmdElemValue converts a pointer-typed CommandElement to its value form.
+// Returns nil if v is nil. Panics if v is non-nil but not a known
+// CommandElement — every implementation must be listed here.
+func cmdElemValue(v any) CommandElement {
+	if v == nil {
+		return nil
+	}
+	switch e := v.(type) {
+	case *StringElement:
+		return *e
+	case *VariableElement:
+		return *e
+	case *BacktickElement:
+		return *e
+	case *ExpressionElement:
+		return *e
+	case StringElement, VariableElement, BacktickElement, ExpressionElement:
+		return v.(CommandElement)
+	}
+	panic(fmt.Sprintf("parser: unhandled CommandElement type %T in cmdElemValue", v))
 }
 
 // ParseQuakefile parses a Quakefile string and returns the AST
@@ -859,11 +949,20 @@ func ParseQuakefile(input string) (QuakeFile, bool, error) {
 	return ParseQuakefileWithSource(input, "")
 }
 
-// ParseQuakefileWithSource parses a Quakefile and tracks the source file
+// ParseQuakefileWithSource parses a Quakefile and tracks the source file.
+// The sourceFile is threaded through peggysue so every AST node's Position
+// records it, and the legacy Task.SourceFile field is populated for
+// backward-compatible consumers.
 func ParseQuakefileWithSource(input string, sourceFile string) (QuakeFile, bool, error) {
 	parser := p.New()
 	grammar := NewGrammar()
-	result, ok, err := parser.Parse(grammar.quakeFile, input, p.WithErrors())
+
+	opts := []p.ParseOption{p.WithErrors()}
+	if sourceFile != "" {
+		opts = append(opts, p.WithFilename(sourceFile))
+	}
+
+	result, ok, err := parser.Parse(grammar.quakeFile, input, opts...)
 
 	if !ok || err != nil {
 		return QuakeFile{}, ok, err
@@ -873,7 +972,8 @@ func ParseQuakefileWithSource(input string, sourceFile string) (QuakeFile, bool,
 		return QuakeFile{Tasks: []Task{}}, true, nil
 	}
 
-	quakeFile := result.(QuakeFile)
+	qfPtr := result.(*QuakeFile)
+	quakeFile := *qfPtr
 
 	// Set source file for all tasks if provided
 	if sourceFile != "" {
@@ -897,9 +997,24 @@ func setNamespaceTaskSourceFile(namespaces []Namespace, sourceFile string) {
 	}
 }
 
-// FileNamespaceDirective represents a file-level namespace directive
-type FileNamespaceDirective struct {
-	Name string
+// positionGuard wraps an already-positioned AST pointer so the containing
+// Action's SetPositioner dispatch can't overwrite it. Peggysue only calls
+// SetPosition on values that implement it, so returning a non-SetPositioner
+// wrapper preserves the child's Position even when the outer rule's span
+// includes leading whitespace or a preceding doc comment.
+type positionGuard struct {
+	inner any
+}
+
+// unwrapGuard peels nested positionGuard wrappers off v.
+func unwrapGuard(v any) any {
+	for {
+		w, ok := v.(positionGuard)
+		if !ok {
+			return v
+		}
+		v = w.inner
+	}
 }
 
 // Helper function to parse commands from content string
@@ -962,6 +1077,14 @@ func parseCommands(content string) []Command {
 		} else {
 			// If parsing fails, treat the whole line as a string
 			elements = []CommandElement{StringElement{Value: fullCommand}}
+		}
+
+		// Peggysue populated each element's Position with offsets into
+		// fullCommand, not into the source file. Rather than ship misleading
+		// values, zero them here. A later branch that wires command parsing
+		// into the main grammar can populate real absolute positions.
+		for i := range elements {
+			elements[i] = zeroCmdElemPosition(elements[i])
 		}
 
 		cmd := Command{

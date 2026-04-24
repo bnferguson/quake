@@ -113,8 +113,13 @@ func (s *quakeServer) initialize(ctx *glsp.Context, params *protocol.InitializeP
 	caps.CompletionProvider = &protocol.CompletionOptions{
 		// "$" triggers variable completion, "," extends a dep list,
 		// ">" is the back half of "=>" so the first task candidate
-		// appears the moment the user finishes typing the arrow.
-		TriggerCharacters: []string{"$", ",", ">"},
+		// appears the moment the user finishes typing the arrow. " "
+		// re-fires completion after "=> " and after ", " — without
+		// it, clients dismiss the popup the moment the user types
+		// the space that normally separates dep-list entries. In
+		// other contexts the classifier returns nil, so the space
+		// trigger is effectively scoped to dep lists.
+		TriggerCharacters: []string{"$", ",", ">", " "},
 	}
 
 	return protocol.InitializeResult{

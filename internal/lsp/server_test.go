@@ -92,6 +92,21 @@ func TestServer_DidChangeRejectsUnexpectedChangeCount(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestServer_InitializeAdvertisesCompletionTriggers(t *testing.T) {
+	// Space matters: clients dismiss the completion popup the moment
+	// the user types a non-trigger character, so without " " in the
+	// trigger list typing the space after "=>" or "," kills the
+	// dep-list suggestions until the user types another ident char.
+	s := newServer("test")
+	result, err := s.initialize(nil, &protocol.InitializeParams{})
+	require.NoError(t, err)
+
+	init, ok := result.(protocol.InitializeResult)
+	require.True(t, ok)
+	require.NotNil(t, init.Capabilities.CompletionProvider)
+	require.ElementsMatch(t, []string{"$", ",", ">", " "}, init.Capabilities.CompletionProvider.TriggerCharacters)
+}
+
 func TestDocumentStore_ConcurrentAccess(t *testing.T) {
 	// Hammer put/get/delete from multiple goroutines under -race to
 	// catch map races. The documents themselves are immutable, so

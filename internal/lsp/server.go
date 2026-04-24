@@ -94,6 +94,7 @@ func newServer(version string) *quakeServer {
 		TextDocumentCompletion:        s.completion,
 		TextDocumentPrepareRename:     s.prepareRename,
 		TextDocumentRename:            s.rename,
+		WorkspaceSymbol:               s.workspaceSymbol,
 	}
 	return s
 }
@@ -127,6 +128,7 @@ func (s *quakeServer) initialize(ctx *glsp.Context, params *protocol.InitializeP
 	// rename can start at the cursor before prompting for a new name.
 	prepareRename := true
 	caps.RenameProvider = protocol.RenameOptions{PrepareProvider: &prepareRename}
+	caps.WorkspaceSymbolProvider = true
 
 	return protocol.InitializeResult{
 		Capabilities: caps,
@@ -269,6 +271,10 @@ func (s *quakeServer) rename(ctx *glsp.Context, params *protocol.RenameParams) (
 		return nil, nil
 	}
 	return d.rename(params.Position, params.NewName)
+}
+
+func (s *quakeServer) workspaceSymbol(ctx *glsp.Context, params *protocol.WorkspaceSymbolParams) ([]protocol.SymbolInformation, error) {
+	return s.docs.workspaceSymbols(params.Query), nil
 }
 
 // publishDiagnostics sends the current diagnostic set for d to the

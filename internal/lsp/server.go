@@ -92,6 +92,8 @@ func newServer(version string) *quakeServer {
 		TextDocumentHover:             s.hover,
 		TextDocumentDocumentHighlight: s.documentHighlight,
 		TextDocumentCompletion:        s.completion,
+		TextDocumentPrepareRename:     s.prepareRename,
+		TextDocumentRename:            s.rename,
 	}
 	return s
 }
@@ -121,6 +123,10 @@ func (s *quakeServer) initialize(ctx *glsp.Context, params *protocol.InitializeP
 		// trigger is effectively scoped to dep lists.
 		TriggerCharacters: []string{"$", ",", ">", " "},
 	}
+	// Rename advertises prepareProvider so clients ask us whether a
+	// rename can start at the cursor before prompting for a new name.
+	prepareRename := true
+	caps.RenameProvider = protocol.RenameOptions{PrepareProvider: &prepareRename}
 
 	return protocol.InitializeResult{
 		Capabilities: caps,
@@ -243,6 +249,26 @@ func (s *quakeServer) completion(ctx *glsp.Context, params *protocol.CompletionP
 		return nil, nil
 	}
 	return d.completion(params.Position), nil
+}
+
+func (s *quakeServer) prepareRename(ctx *glsp.Context, params *protocol.PrepareRenameParams) (any, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	r := d.prepareRename(params.Position)
+	if r == nil {
+		return nil, nil
+	}
+	return *r, nil
+}
+
+func (s *quakeServer) rename(ctx *glsp.Context, params *protocol.RenameParams) (*protocol.WorkspaceEdit, error) {
+	d := s.docs.get(params.TextDocument.URI)
+	if d == nil {
+		return nil, nil
+	}
+	return d.rename(params.Position, params.NewName)
 }
 
 // publishDiagnostics sends the current diagnostic set for d to the

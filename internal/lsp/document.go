@@ -315,6 +315,13 @@ func (d *document) findUses(pos protocol.Position) *symbolUses {
 	// (task deps after "=>", variables after "$"), so scanning both
 	// kinds is both safe and cheap. Lets an undeclared name still
 	// surface as a reference list.
+	//
+	// Known gap: qualifiedNameAt resolves the cursor literally, and
+	// scanVariableRefs searches for the exact FQN. A variable declared
+	// inside `namespace db` is keyed "db:URL" but written as "$URL" at
+	// the use site, and the analysis/symbols resolution doesn't carry
+	// namespace context. Rename inherits this; see
+	// TestBug_RenameNamespacedVariableNotSupported.
 	d.walkTasks(func(t *parser.Task) {
 		uses.refs = append(uses.refs, scanDependencyRefs(d.text, t.Position, name)...)
 		uses.refs = append(uses.refs, scanVariableRefs(d.text, t.Position.Start, t.Position.End, name)...)

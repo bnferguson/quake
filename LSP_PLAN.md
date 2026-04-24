@@ -2,6 +2,8 @@
 
 Working doc for the Quakefile language server effort. Lives on the `lsp/meta` branch only — never merges into `main` or upstream PRs. Update it whenever a branch lands, gets rebased, or shifts scope.
 
+See [`STANDALONE_PLAN.md`](STANDALONE_PLAN.md) for the plan to spin the LSP out into its own repository and phase these branches back into upstream.
+
 ## Goal
 
 First-class editor support for Quakefiles: go-to-definition, find-references, rename, autocomplete, diagnostics. Shipped as a `quake lsp` subcommand, reusing the existing parser + evaluator. Zed (via [zed-quakefile](https://github.com/bnferguson/zed-quakefile)) will be the first consumer.

@@ -165,21 +165,29 @@ and 200 lines of actual source + 230 lines of tests. 02/03 are a
 real product pitch riding on "ship `quake check`", so they stand or
 fall on whether miren wants that subcommand.
 
-## Open questions
+## ~~Open questions~~ (Answered)
 
-- **Repo name / module path.** `quake-lsp`, `quakelsp`, `quake-language-server`?
+- ~~**Repo name / module path.** `quake-lsp`, `quakelsp`, `quake-language-server`?
   Vanity domain or plain `github.com/bnferguson/...`? The name
   affects the binary (`quake-lsp` vs `quakels`) — Zed's extension
-  config is the first downstream consumer to update.
-- **Release cadence.** Tags from day one, or `go install` from
+  config is the first downstream consumer to update.~~
+  - `quake-lsp`
+- ~~**Release cadence.** Tags from day one, or `go install` from
   main until there's a downstream pinning need? Homebrew tap
-  (pair with `zed-quakefile`)?
-- **Backfill `quake lsp` subcommand.** Leave it in the fork as a
+  (pair with `zed-quakefile`)?~~
+  - go install from main for now.
+- ~~**Backfill `quake lsp` subcommand.** Leave it in the fork as a
   redirect ("install quake-lsp separately"), remove it, or keep it
-  working by `go install`-ing the standalone from the fork's build?
-- **Config surface.** The LSP reads nothing from the workspace
+  working by `go install`-ing the standalone from the fork's build?~~
+  - Leave it. The subcommand lives on fork branches `lsp/04`–`lsp/08`
+    and keeps working for anyone already installed from there; the
+    standalone just becomes the recommended install going forward.
+    Phase 1 only touches `lsp/01` as an import, so there's nothing to
+    reconcile today.
+- ~~**Config surface.** The LSP reads nothing from the workspace
   today. If a `.quake-lsp.toml` ever shows up, it ships with the
-  standalone — not upstream's problem.
+  standalone — not upstream's problem.~~
+  - yeah we don't need anything here right now
 
 ## How this doc stays current
 

@@ -82,17 +82,19 @@ source-text-free; the LSP layer pays the precision cost.
 
 ## Branch → PR mapping
 
+Each branch name links to its GitHub compare view against its base, so the diff shows only what that branch adds to the stack.
+
 | # | Branch | Base | PR target | Status | Notes |
 |---|---|---|---|---|---|
-| 0 | `lsp/meta` | `main` | never | 🟠 in progress | This doc lives here; never goes upstream |
-| 1 | `lsp/01-ast-positions` | `main` | `miren/main` | 🟡 complete | Add `Position` to AST nodes; implement `peggysue.SetPositioner` |
-| 2 | `lsp/02-workspace-package` | `lsp/01` | `miren/main` (after 1 lands) | 🟡 complete | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
-| 3 | `lsp/03-analysis-package` | `lsp/02` | `miren/main` (after 2 lands) | 🟡 complete | `analysis/` package: symbols, refs, diagnostics |
-| 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🟡 complete | `quake lsp` subcommand, Phase 1 LSP methods |
-| 5 | `lsp/05-navigation` | `lsp/04` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 2: `textDocument/references`, `hover`, `documentHighlight` |
-| 6 | `lsp/06-completion` | `lsp/05` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 1: `textDocument/completion` for deps, variables, and expression identifiers |
-| 7 | `lsp/07-rename` | `lsp/06` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 2: `textDocument/prepareRename` + `textDocument/rename` |
-| 8 | `lsp/08-workspace-symbol` | `lsp/07` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 3: `workspace/symbol` for Cmd-T across open documents |
+| 0 | [`lsp/meta`](https://github.com/bnferguson/quake/tree/lsp/meta) | `main` | never | 🟠 in progress | This doc lives here; never goes upstream |
+| 1 | [`lsp/01-ast-positions`](https://github.com/bnferguson/quake/compare/main...lsp/01-ast-positions) | `main` | `miren/main` | 🟡 complete | Add `Position` to AST nodes; implement `peggysue.SetPositioner` |
+| 2 | [`lsp/02-workspace-package`](https://github.com/bnferguson/quake/compare/lsp/01-ast-positions...lsp/02-workspace-package) | `lsp/01` | `miren/main` (after 1 lands) | 🟡 complete | Extract `loadAllQuakefiles` + friends from `main.go` into `workspace/` |
+| 3 | [`lsp/03-analysis-package`](https://github.com/bnferguson/quake/compare/lsp/02-workspace-package...lsp/03-analysis-package) | `lsp/02` | `miren/main` (after 2 lands) | 🟡 complete | `analysis/` package: symbols, refs, diagnostics |
+| 4 | [`lsp/04-lsp-server`](https://github.com/bnferguson/quake/compare/lsp/03-analysis-package...lsp/04-lsp-server) | `lsp/03` | `miren/main` (optional) or stays in fork | 🟡 complete | `quake lsp` subcommand, Phase 1 LSP methods |
+| 5 | [`lsp/05-navigation`](https://github.com/bnferguson/quake/compare/lsp/04-lsp-server...lsp/05-navigation) | `lsp/04` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 2: `textDocument/references`, `hover`, `documentHighlight` |
+| 6 | [`lsp/06-completion`](https://github.com/bnferguson/quake/compare/lsp/05-navigation...lsp/06-completion) | `lsp/05` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 1: `textDocument/completion` for deps, variables, and expression identifiers |
+| 7 | [`lsp/07-rename`](https://github.com/bnferguson/quake/compare/lsp/06-completion...lsp/07-rename) | `lsp/06` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 2: `textDocument/prepareRename` + `textDocument/rename` |
+| 8 | [`lsp/08-workspace-symbol`](https://github.com/bnferguson/quake/compare/lsp/07-rename...lsp/08-workspace-symbol) | `lsp/07` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 3: `workspace/symbol` for Cmd-T across open documents |
 
 Status legend: 🔴 not started · 🟠 in progress · 🟡 complete locally (no PR yet) · 🟢 PR open · ✅ merged upstream · ⚪ blocked
 

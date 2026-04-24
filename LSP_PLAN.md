@@ -91,6 +91,7 @@ source-text-free; the LSP layer pays the precision cost.
 | 4 | `lsp/04-lsp-server` | `lsp/03` | `miren/main` (optional) or stays in fork | 🟡 complete | `quake lsp` subcommand, Phase 1 LSP methods |
 | 5 | `lsp/05-navigation` | `lsp/04` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 2: `textDocument/references`, `hover`, `documentHighlight` |
 | 6 | `lsp/06-completion` | `lsp/05` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 1: `textDocument/completion` for deps, variables, and expression identifiers |
+| 7 | `lsp/07-rename` | `lsp/06` | `miren/main` (optional) or stays in fork | 🟡 complete | Phase 3, part 2: `textDocument/prepareRename` + `textDocument/rename` |
 
 Status legend: 🔴 not started · 🟠 in progress · 🟡 complete locally (no PR yet) · 🟢 PR open · ✅ merged upstream · ⚪ blocked
 

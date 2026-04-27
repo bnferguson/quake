@@ -63,14 +63,24 @@ phases, we drop the copies without moving use sites.
 
 Bootstrap checklist:
 
-- [ ] Pick repo name + module path (section below)
-- [ ] Create repo, copy over `analysis/`, `workspace/`, `internal/lsp/`
-- [ ] Add `cmd/quake-lsp/main.go` (5–10 lines, calls `lsp.Serve`)
-- [ ] Configure `go.mod` with the `replace` directive
-- [ ] Port the fork's CI (tests + `go vet`)
-- [ ] Point `zed-quakefile` at the new binary name
-- [ ] Retire the `quake lsp` subcommand in the fork (or leave it
-      referencing the new module as a convenience — TBD)
+- [x] Pick repo name + module path — `quake-lsp`,
+      `github.com/bnferguson/quake-lsp`
+- [x] Create repo, copy over `analysis/`, `workspace/`,
+      `internal/lsp/`. Also pulled in `internal/gotasks/`: `workspace/`
+      depends on it and Go's internal-package rule blocks reaching it
+      from outside `miren.dev/quake`.
+- [x] Add `cmd/quake-lsp/main.go` (calls `lsp.Serve`; `version` is a
+      `var` so we can wire it through `-ldflags` once tagging starts)
+- [x] Configure `go.mod` with the `replace` directive — pinned to
+      `d13a2a4` (`lsp/01-ast-positions` tip)
+- [x] Add CI (`go vet` + `go test` on push/PR; nothing to port from
+      the fork — it has no workflow files)
+- [x] Point `zed-quakefile` at the new binary name — see the
+      `lsp-standalone` branch (the older `lsp` branch keeps the
+      previous `quake lsp` subcommand wiring as a checkpoint)
+- [x] Retire the `quake lsp` subcommand in the fork — leaving it.
+      Standalone is the new recommended install; the fork's
+      subcommand keeps working for anyone already on it.
 
 ### Phase 2 — pitch `lsp/01-ast-positions` upstream
 
@@ -189,9 +199,30 @@ fall on whether miren wants that subcommand.
   standalone — not upstream's problem.~~
   - yeah we don't need anything here right now
 
+## Status
+
+Standalone repo: [bnferguson/quake-lsp](https://github.com/bnferguson/quake-lsp).
+Editor extension: [bnferguson/zed-quakefile](https://github.com/bnferguson/zed-quakefile)
+on the `lsp-standalone` branch.
+
+Phase 1 is done. The standalone builds, vets, and tests clean against
+the fork's `lsp/01-ast-positions` parser via a `go.mod` replace
+directive. The Zed extension launches `quake-lsp` from PATH (no
+subcommand args).
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1 — spin out, import from fork | done | quake-lsp pushed; zed-quakefile repointed on `lsp-standalone`. End-to-end editor flow verified locally. |
+| 2 — pitch `lsp/01-ast-positions` upstream | offline | Brandon driving directly with Evan/miren. Update `go.mod` to drop the replace once the branch lands upstream. |
+| 3 — pitch `lsp/03-analysis-package` (+ 02) | not started | depends on Phase 2 outcome |
+| 4 — steady state | not started | |
+
+Parser pin: `bnferguson/quake@d13a2a4` (commit "Address second-pass
+review on position tracking" on `lsp/01-ast-positions`). Bump this in
+`go.mod` and update the row above when the branch moves.
+
 ## How this doc stays current
 
-When phase 1 starts, add a live status table here (similar to
-`LSP_PLAN.md`'s branch/PR mapping). Link the standalone repo once
-created. Update the upstreaming fallback matrix with real outcomes
-as PRs land or get declined.
+Update the status table above as phases progress. Link the standalone
+repo's GitHub URL when it's pushed. Update the upstreaming fallback
+matrix with real outcomes as PRs land or get declined.

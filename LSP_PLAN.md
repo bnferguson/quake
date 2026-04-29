@@ -46,7 +46,7 @@ quake/
 |---|---|
 | `initialize` / `initialized` / `shutdown` / `exit` | Lifecycle |
 | `textDocument/didOpen` / `didChange` / `didSave` / `didClose` | Full-sync |
-| `textDocument/publishDiagnostics` | Parse errors, undefined deps, cycles, unresolved `$VAR` refs |
+| `textDocument/publishDiagnostics` | Parse errors, undefined deps, cycles, unresolved `$VAR` refs, `{{...}}` expressions inside quoted strings. Narrowed to the offending token (variable name, dep name, back-edge). Heuristics silence shell-env names (`$HOME`, `$PATH`, …), `for X in ...` / `read X` bindings, and `name=value` env-prefix assignments |
 | `textDocument/documentSymbol` | Outline: tasks, namespaces, variables |
 | `textDocument/definition` | Jump from `=> build` → `task build`, `$VAR` → assignment |
 
@@ -113,7 +113,7 @@ Upstream PR flow: push branch, open PR with base `miren/quake:main` (or the prio
 
 - **Upstream path for Phase 4 LSP server.** Pitch as an issue first or send the PR? Probably pitch — adding an LSP commits miren to editor-integration support forever.
 - **Multi-root workspaces.** Zed can open two unrelated projects in sub-folders. Start single-root; grow into multi-root if it actually comes up.
-- **Unresolved-variable diagnostics for `{{env.X}}`.** Env vars are runtime values. Warn on unresolved non-env expression refs only, or skip `env` entirely? Leaning skip.
+- **Configurable shell-env allowlist.** The built-in list (POSIX standards + GitHub Actions) covers ~90% of real Quakefiles. If users hit the gap often enough, lift the list into a `.quake-lsp.toml` opt-in extension. Until then, a missed name is a one-line PR.
 
 ## How to work the stack
 
